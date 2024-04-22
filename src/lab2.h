@@ -2,31 +2,29 @@
 #define LAB2_H
 
 #include "BluetoothSerial.h"
-#include <Adafruit_AHTX0.h>
+
+#include "config.h"
 
 #include "svetofor.h"
+#include "termo.h"
 
 
-#define LINE_ENDING "\r\n"
-
-#define SVETOFOR_PIN_0 13
-#define SVETOFOR_PIN_1 12
-#define SVETOFOR_PIN_2 14
-
-
-typedef class Termometr final { //Change name class to App
+typedef class Parser final {
 
 public:
 
-    Termometr() {
+    Parser()
+        : svetofor{SVETOFOR_PIN_0,
+                   SVETOFOR_PIN_1,
+                   SVETOFOR_PIN_2} {
         SerialBT.begin("DeviceZheKa");
     }
-    Termometr(const Termometr&) = delete;
-    Termometr(Termometr&&) = delete;
-    ~Termometr() = default;
+    Parser(const Parser&) = delete;
+    Parser(Parser&&) = delete;
+    ~Parser() = default;
 
-    Termometr& operator = (const Termometr&) = delete;
-    Termometr& operator = (Termometr&&) = delete;
+    Parser& operator = (const Parser&) = delete;
+    Parser& operator = (Parser&&) = delete;
 
 public:
 
@@ -42,18 +40,24 @@ public:
             SerialBT.print("cmd got\n");
 
             if(serialText == "get temp" LINE_ENDING) {
-                handlers.Temp(SerialBT);
+                SerialBT.println(termo.GetTemp());
             }
             else if(serialText == "set light" LINE_ENDING) {
-                SerialBT.print("set light cmd\n");
-                handlers.Light(SerialBT, true);
+                pinMode( 12, OUTPUT );
+                Serial.println("Light set on");
+                svetofor.setValueOut(1000, 1000, 1000);
             }
             else if(serialText == "set dark" LINE_ENDING) {
-                SerialBT.print("set dark cmd\n");
-                handlers.Light(SerialBT, false);
+                pinMode( 12, OUTPUT );
+                Serial.println("Light set off");
+                svetofor.setValueOut(0, 0, 0);
             }
             else {
                 SerialBT.print("bad cmd\n");
+                SerialBT.print("help:\n");
+                SerialBT.print("  get temp  - get current temperature\n");
+                SerialBT.print("  set light - enable asus aura rgb lightning\n");
+                SerialBT.print("  set dark  - energy safe\n");
             }
 
         }
@@ -62,53 +66,20 @@ public:
 
 private:
 
-    class Handlers final {
-    public:
-        Handlers()
-        : svetofor{SVETOFOR_PIN_0,
-                   SVETOFOR_PIN_1,
-                   SVETOFOR_PIN_2} {
-
-            if(!aht.begin()){
-                while(true)delay(10);
-            }
-        }
-
-        void Temp(Stream& SerialBT) {
-            aht.getEvent(&humidity, &temp);
-            SerialBT.println(temp.temperature);
-        }
-        void Light(Stream& Serial, bool mode) {
-            pinMode( 12, OUTPUT );
-            Serial.print("Light set ");
-            Serial.println(int(mode));
-            if(mode) {
-                analogWrite( 12, 4000);
-                svetofor.setValueOut(1000, 1000, 1000);
-            } else {
-                analogWrite( 12, 0);
-                svetofor.setValueOut(0, 0, 0);
-            }
-        }
-    private:
-        Adafruit_AHTX0  aht;
-        sensors_event_t humidity, temp;
-        Svetofor        svetofor;
-    } handlers;
-
-private:
-
     BluetoothSerial SerialBT;
 
-} *pTermometr;
+    Svetofor svetofor;
+    Termo    termo;
 
-pTermometr pTerm;
+} *pParser;
+
+pParser pTerm;
 
 
 void setup() {
     Serial.begin(115200);
     Serial.println("SETUP");
-    pTerm = new Termometr;
+    pTerm = new Parser;
 }
 
 void loop(){

@@ -1,7 +1,8 @@
 #include <Arduino.h>
 #include <Adafruit_AHTX0.h>
 
-#define NEWCODE
+#include "config.h"
+
 #if defined(NEWCODE)
 #include "lab2.h"
 #else
@@ -30,9 +31,9 @@ class outGadj{
       int pin1 = pinOne; 
       int pin2 = pinTwo; 
       int pin3 = pinThree; 
-      pinMode( pinOne, OUTPUT );
-      pinMode( pinTwo, OUTPUT );
-      pinMode( pinThree, OUTPUT );
+      pinMode( pin1, OUTPUT );
+      pinMode( pin2, OUTPUT );
+      pinMode( pin3, OUTPUT );
     }
 
     void setValueOut( int value1, int value2, int value3 ){
